@@ -111,10 +111,7 @@ export const ERROR_MESSAGES = {
   // arama doğrulama
   SEARCH_TERM_TOO_LONG: `Arama terimi en fazla ${LENGTH_LIMITS.SEARCH_TERM.MAX} karakter olabilir`,
   
-  // tarih doğrulama
-  START_DATE_AFTER_END_DATE: 'Başlangıç tarihi bitiş tarihinden sonra olamaz',
-  END_DATE_BEFORE_START_DATE: 'Bitiş tarihi başlangıç tarihinden önce olamaz',
-  DATE_MUST_BE_FUTURE: 'Tarih gelecekte olmalıdır'
+
 };
 
 //formlar

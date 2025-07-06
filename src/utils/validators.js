@@ -16,9 +16,7 @@ const ERROR_MESSAGES = {
   TOO_LONG: 'Çok uzun',
   INVALID_VALUE: 'Geçersiz değer',
   PASSWORDS_DONT_MATCH: 'Şifreler eşleşmiyor',
-  DATE_MUST_BE_FUTURE: 'Tarih gelecekte olmalıdır',
-  START_DATE_AFTER_END_DATE: 'Başlangıç tarihi bitiş tarihinden sonra olamaz',
-  END_DATE_BEFORE_START_DATE: 'Bitiş tarihi başlangıç tarihinden önce olamaz'
+
 };
 
 // pagination
@@ -109,16 +107,7 @@ export const validateCreateTask = (taskData) => {
     errors.title = 'Görev başlığı sadece harf, rakam, boşluk ve özel karakterler içerebilir';
   }
 
-  // due date
-  if (taskData.dueDate) {
-    const dueDate = new Date(taskData.dueDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (dueDate <= today) {
-      errors.dueDate = 'Bitiş tarihi bugünden sonra olmalıdır';
-    }
-  }
+
 
   return errors;
 };
@@ -214,16 +203,7 @@ export const validateGetTasksQuery = (query) => {
     errors.searchTerm = 'Arama terimi en fazla 100 karakter olabilir';
   }
 
-  // date range
-  if (query.startDate && query.endDate) {
-    const startDate = new Date(query.startDate);
-    const endDate = new Date(query.endDate);
-    
-    if (startDate > endDate) {
-      errors.startDate = 'Başlangıç tarihi bitiş tarihinden sonra olamaz';
-      errors.endDate = 'Bitiş tarihi başlangıç tarihinden önce olamaz';
-    }
-  }
+
 
   return errors;
 };
@@ -278,18 +258,7 @@ export const validateField = {
     return null;
   },
 
-  futureDate: (value) => {
-    if (value) {
-      const date = new Date(value);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      if (date <= today) {
-        return 'Tarih gelecekte olmalıdır';
-      }
-    }
-    return null;
-  }
+
 };
 
 export default {

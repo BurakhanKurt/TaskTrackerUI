@@ -109,7 +109,6 @@ export const tasksAPI = {
       pageSize = API_CONFIG.PAGINATION.DEFAULT_PAGE_SIZE,
       statusFilter = null,
       searchTerm = null,
-      startDate = null,
       endDate = null
     } = params;
 
@@ -121,10 +120,6 @@ export const tasksAPI = {
     
     if (searchTerm) {
       url += `&searchTerm=${encodeURIComponent(searchTerm)}`;
-    }
-    
-    if (startDate) {
-      url += `&startDate=${startDate}`;
     }
     
     if (endDate) {

@@ -1,19 +1,26 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { tasksAPI } from '../../services/api';
 
-// get all
+// get all tasks
 export const fetchTasks = createAsyncThunk(
   'tasks/fetchTasks',
-  async (params = {}, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
       const response = await tasksAPI.getAll(params);
       
       // model
+      const tasks = response.data.data.items.map(task => ({
+        id: task.id,
+        title: task.title,
+        isCompleted: task.isCompleted,
+        createdAt: task.createdAt,
+        completedAt: task.completedAt,
+        dueDate: task.dueDate,
+      }));
+      
       return {
-        tasks: response.data.data.tasks,
+        tasks,
         totalCount: response.data.data.totalCount,
-        page: response.data.data.page,
-        pageSize: response.data.data.pageSize,
         totalPages: response.data.data.totalPages,
         totalTasks: response.data.data.totalTasks,
         completed: response.data.data.completed,
@@ -52,7 +59,6 @@ export const createTask = createAsyncThunk(
         pageSize: state.tasks.pageSize,
         statusFilter: state.tasks.statusFilter,
         searchTerm: state.tasks.searchTerm,
-        startDate: state.tasks.startDate,
         endDate: state.tasks.endDate
       }));
       
@@ -77,7 +83,6 @@ export const updateTaskTitle = createAsyncThunk(
         pageSize: state.tasks.pageSize,
         statusFilter: state.tasks.statusFilter,
         searchTerm: state.tasks.searchTerm,
-        startDate: state.tasks.startDate,
         endDate: state.tasks.endDate
       }));
       
@@ -103,7 +108,6 @@ export const toggleTaskCompletion = createAsyncThunk(
         pageSize: state.tasks.pageSize,
         statusFilter: state.tasks.statusFilter,
         searchTerm: state.tasks.searchTerm,
-        startDate: state.tasks.startDate,
         endDate: state.tasks.endDate
       }));
       
@@ -128,7 +132,6 @@ export const updateTaskDueDate = createAsyncThunk(
         pageSize: state.tasks.pageSize,
         statusFilter: state.tasks.statusFilter,
         searchTerm: state.tasks.searchTerm,
-        startDate: state.tasks.startDate,
         endDate: state.tasks.endDate
       }));
       
@@ -153,7 +156,6 @@ export const deleteTask = createAsyncThunk(
         pageSize: state.tasks.pageSize,
         statusFilter: state.tasks.statusFilter,
         searchTerm: state.tasks.searchTerm,
-        startDate: state.tasks.startDate,
         endDate: state.tasks.endDate
       }));
       
@@ -184,7 +186,6 @@ const initialState = {
   // filters
   statusFilter: null,
   searchTerm: '',
-  startDate: null,
   endDate: null,
 };
 
@@ -221,11 +222,6 @@ const taskSlice = createSlice({
       state.searchTerm = action.payload;
       state.page = 1;
     },
-    // set start date
-    setStartDate: (state, action) => {
-      state.startDate = action.payload;
-      state.page = 1;
-    },
     // set end date
     setEndDate: (state, action) => {
       state.endDate = action.payload;
@@ -235,13 +231,12 @@ const taskSlice = createSlice({
     clearFilters: (state) => {
       state.statusFilter = null;
       state.searchTerm = '';
-      state.startDate = null;
       state.endDate = null;
       state.page = 1;
     },
   },
   extraReducers: (builder) => {
-    // get all
+    // fetch tasks
     builder
       .addCase(fetchTasks.pending, (state) => {
         state.loading = true;
@@ -251,8 +246,6 @@ const taskSlice = createSlice({
         state.loading = false;
         state.tasks = action.payload.tasks;
         state.totalCount = action.payload.totalCount;
-        state.page = action.payload.page;
-        state.pageSize = action.payload.pageSize;
         state.totalPages = action.payload.totalPages;
         state.totalTasks = action.payload.totalTasks;
         state.completed = action.payload.completed;
@@ -265,14 +258,13 @@ const taskSlice = createSlice({
         state.error = action.payload;
       })
       
-      // create
+      // create task
       .addCase(createTask.pending, (state) => {
         state.creating = true;
         state.error = null;
       })
-      .addCase(createTask.fulfilled, (state, action) => {
+      .addCase(createTask.fulfilled, (state) => {
         state.creating = false;
-        state.tasks.push(action.payload);
         state.error = null;
       })
       .addCase(createTask.rejected, (state, action) => {
@@ -280,17 +272,13 @@ const taskSlice = createSlice({
         state.error = action.payload;
       })
       
-      // update title
+      // update task title
       .addCase(updateTaskTitle.pending, (state) => {
         state.updating = true;
         state.error = null;
       })
-      .addCase(updateTaskTitle.fulfilled, (state, action) => {
+      .addCase(updateTaskTitle.fulfilled, (state) => {
         state.updating = false;
-        const taskIndex = state.tasks.findIndex(task => task.id === action.payload.id);
-        if (taskIndex !== -1) {
-          state.tasks[taskIndex].title = action.payload.title;
-        }
         state.error = null;
       })
       .addCase(updateTaskTitle.rejected, (state, action) => {
@@ -298,17 +286,13 @@ const taskSlice = createSlice({
         state.error = action.payload;
       })
       
-      // toggle completion
+      // toggle task completion
       .addCase(toggleTaskCompletion.pending, (state) => {
         state.updating = true;
         state.error = null;
       })
-      .addCase(toggleTaskCompletion.fulfilled, (state, action) => {
+      .addCase(toggleTaskCompletion.fulfilled, (state) => {
         state.updating = false;
-        const taskIndex = state.tasks.findIndex(task => task.id === action.payload.id);
-        if (taskIndex !== -1) {
-          state.tasks[taskIndex].isCompleted = action.payload.isCompleted;
-        }
         state.error = null;
       })
       .addCase(toggleTaskCompletion.rejected, (state, action) => {
@@ -316,17 +300,13 @@ const taskSlice = createSlice({
         state.error = action.payload;
       })
       
-      // update due date
+      // update task due date
       .addCase(updateTaskDueDate.pending, (state) => {
         state.updating = true;
         state.error = null;
       })
-      .addCase(updateTaskDueDate.fulfilled, (state, action) => {
+      .addCase(updateTaskDueDate.fulfilled, (state) => {
         state.updating = false;
-        const taskIndex = state.tasks.findIndex(task => task.id === action.payload.id);
-        if (taskIndex !== -1) {
-          state.tasks[taskIndex].dueDate = action.payload.dueDate;
-        }
         state.error = null;
       })
       .addCase(updateTaskDueDate.rejected, (state, action) => {
@@ -334,14 +314,13 @@ const taskSlice = createSlice({
         state.error = action.payload;
       })
       
-      // delete
+      // delete task
       .addCase(deleteTask.pending, (state) => {
         state.deleting = true;
         state.error = null;
       })
-      .addCase(deleteTask.fulfilled, (state, action) => {
+      .addCase(deleteTask.fulfilled, (state) => {
         state.deleting = false;
-        state.tasks = state.tasks.filter(task => task.id !== action.payload);
         state.error = null;
       })
       .addCase(deleteTask.rejected, (state, action) => {
@@ -351,7 +330,7 @@ const taskSlice = createSlice({
   },
 });
 
-// actions
+// action'ları export et
 export const { 
   clearError, 
   clearTasks, 
@@ -359,7 +338,6 @@ export const {
   setPageSize, 
   setStatusFilter, 
   setSearchTerm, 
-  setStartDate, 
   setEndDate, 
   clearFilters 
 } = taskSlice.actions;

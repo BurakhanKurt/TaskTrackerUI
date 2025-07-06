@@ -102,7 +102,7 @@ const TaskForm = () => {
           type="date"
           value={taskData.dueDate}
           onChange={handleInputChange}
-          min={new Date().toISOString().split('T')[0]}
+
           className="w-full input-field"
           disabled={creating || loading}
         />
