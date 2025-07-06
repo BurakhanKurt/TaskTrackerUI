@@ -1,11 +1,11 @@
-import React, { useState, useCallback, memo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState, useCallback } from 'react';
+import { useDispatch } from 'react-redux';
 import { updateTaskTitle, toggleTaskCompletion, deleteTask, updateTaskDueDate } from '../../store/slices/taskSlice';
 import TaskRow from './TaskRow';
 import { validateUpdateTaskTitle, validateUpdateTaskDueDate } from '../../utils/validators';
 
 
-const TaskList = memo(({ tasks, isUpdating, isDeleting, isLoading }) => {
+const TaskList = ({ tasks, isLoading }) => {
   // input verileri
   const [showMobileContentModal, setShowMobileContentModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -18,22 +18,22 @@ const TaskList = memo(({ tasks, isUpdating, isDeleting, isLoading }) => {
 //title güncelle
   const handleUpdateTitle = useCallback(async (id, title) => {
     await dispatch(updateTaskTitle({ id, title }));
-  }, [dispatch]);
+  }, []);
 
   // completion
   const handleToggleCompletion = useCallback(async (id, isCompleted) => {
     await dispatch(toggleTaskCompletion({ id, isCompleted }));
-  }, [dispatch]);
+  }, []);
 
   // delete
   const handleDeleteTask = useCallback(async (id) => {
     await dispatch(deleteTask(id));
-  }, [dispatch]);
+  }, []);
 
   // due date
   const handleUpdateDueDate = useCallback(async (id, dueDate) => {
     await dispatch(updateTaskDueDate({ id, dueDate }));
-  }, [dispatch]);
+  }, []);
 
   // save
   const handleSaveMobileContent = async () => {
@@ -44,7 +44,6 @@ const TaskList = memo(({ tasks, isUpdating, isDeleting, isLoading }) => {
     
     if (Object.keys(errors).length > 0) {
       // hata göster
-      console.error('Doğrulama hatası:', errors.title);
       return;
     }
     
@@ -56,7 +55,7 @@ const TaskList = memo(({ tasks, isUpdating, isDeleting, isLoading }) => {
       }
       setShowMobileContentModal(false);
     } catch (error) {
-      console.error('Mobil başlık güncellenirken hata:', error);
+      // Hata işlendi
     } finally {
       setIsUpdatingMobile(false);
     }
@@ -133,8 +132,8 @@ const TaskList = memo(({ tasks, isUpdating, isDeleting, isLoading }) => {
                 onToggleCompletion={handleToggleCompletion}
                 onDelete={handleDeleteTask}
                 onUpdateDueDate={handleUpdateDueDate}
-                isUpdating={isUpdating}
-                isDeleting={isDeleting}
+                isUpdating={false}
+                isDeleting={false}
               />
             ))}
           </tbody>
@@ -242,7 +241,7 @@ const TaskList = memo(({ tasks, isUpdating, isDeleting, isLoading }) => {
                 {/* Durum Değiştirme Butonu */}
                 <button
                   onClick={() => handleToggleCompletion(task.id, !task.isCompleted)}
-                  disabled={isUpdating}
+                  disabled={false}
                   className={`text-sm px-3 py-1 rounded-full font-medium transition-colors duration-200 ${
                     task.isCompleted
                       ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
@@ -250,14 +249,14 @@ const TaskList = memo(({ tasks, isUpdating, isDeleting, isLoading }) => {
                   } disabled:opacity-50`}
                   title={task.isCompleted ? 'Bekliyor olarak işaretle' : 'Tamamlandı olarak işaretle'}
                 >
-                  {isUpdating ? 'Güncelleniyor...' : (task.isCompleted ? 'Bekliyor' : 'Tamamlandı')}
+                  {task.isCompleted ? 'Bekliyor' : 'Tamamlandı'}
                 </button>
               </div>
 
               {/* Silme Butonu */}
               <button
                 onClick={() => handleDeleteTask(task.id)}
-                disabled={isDeleting}
+                disabled={false}
                 className="text-red-600 hover:text-red-800 p-2 disabled:opacity-50"
                 title="Görevi sil"
               >
@@ -271,7 +270,7 @@ const TaskList = memo(({ tasks, isUpdating, isDeleting, isLoading }) => {
       </div>
 
       {/* Boş Durum */}
-      {tasks.length === 0 && (
+      {tasks.length === 0 && !isLoading && (
         <div className="text-center py-8">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -339,6 +338,6 @@ const TaskList = memo(({ tasks, isUpdating, isDeleting, isLoading }) => {
       )}
     </div>
   );
-});
+};
 
 export default TaskList;

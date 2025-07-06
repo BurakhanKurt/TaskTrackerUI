@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 
-const TaskStats = ({ totalTasks, completed, pending, progress }) => {
+const TaskStats = memo(({ totalTasks, completed, pending, progress }) => {
   // apiden gelen
   const completionPercentage = progress || 0;
 
@@ -75,6 +75,6 @@ const TaskStats = ({ totalTasks, completed, pending, progress }) => {
       ))}
     </div>
   );
-};
+});
 
 export default TaskStats; 

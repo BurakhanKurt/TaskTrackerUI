@@ -9,7 +9,7 @@ export const fetchTasks = createAsyncThunk(
       const response = await tasksAPI.getAll(params);
       
       // model
-      const tasks = response.data.data.items.map(task => ({
+      const tasks = response.data.data.tasks.map(task => ({
         id: task.id,
         title: task.title,
         isCompleted: task.isCompleted,
@@ -76,7 +76,7 @@ export const updateTaskTitle = createAsyncThunk(
     try {
       await tasksAPI.updateTitle(id, title);
       
-      // refresh
+      // Refresh tasks to get updated data
       const state = getState();
       dispatch(fetchTasks({
         page: state.tasks.page,
@@ -101,7 +101,7 @@ export const toggleTaskCompletion = createAsyncThunk(
     try {
       await tasksAPI.updateStatus(id, isCompleted);
       
-      // refresh
+      // Refresh tasks to get updated data
       const state = getState();
       dispatch(fetchTasks({
         page: state.tasks.page,
@@ -125,7 +125,7 @@ export const updateTaskDueDate = createAsyncThunk(
     try {
       await tasksAPI.updateDueDate(id, dueDate);
       
-      // refresh
+      // Refresh tasks to get updated data
       const state = getState();
       dispatch(fetchTasks({
         page: state.tasks.page,
@@ -149,7 +149,7 @@ export const deleteTask = createAsyncThunk(
     try {
       await tasksAPI.delete(taskId);
       
-      // refresh
+      // For delete, we need to refetch to update counts and pagination
       const state = getState();
       dispatch(fetchTasks({
         page: state.tasks.page,

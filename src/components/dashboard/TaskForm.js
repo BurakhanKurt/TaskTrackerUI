@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createTask } from '../../store/slices/taskSlice';
 import { validateCreateTask } from '../../utils/validators';
 
 
-const TaskForm = () => {
+const TaskForm = memo(({ onSubmit, loading: formLoading, error: formError }) => {
   // input verileri
   const [taskData, setTaskData] = useState({
     title: '',
@@ -14,7 +14,7 @@ const TaskForm = () => {
 
   // hooks
   const dispatch = useDispatch();
-  const { creating, loading } = useSelector((state) => state.tasks);
+  const { creating } = useSelector((state) => state.tasks);
 
   // input değişiklikleri
   const handleInputChange = (e) => {
@@ -59,17 +59,19 @@ const TaskForm = () => {
       dueDate: taskData.dueDate || null,
     };
 
-    // görev oluşturma send
-    const result = await dispatch(createTask(newTaskData));
+    // onSubmit prop'u varsa onu kullan, yoksa dispatch kullan
+    if (onSubmit) {
+      await onSubmit(newTaskData);
+    } else {
+      const result = await dispatch(createTask(newTaskData));
+    }
     
     // başarılıysa formu temizle
-    if (createTask.fulfilled.match(result)) {
-      setTaskData({
-        title: '',
-        dueDate: ''
-      });
-      setError('');
-    }
+    setTaskData({
+      title: '',
+      dueDate: ''
+    });
+    setError('');
   };
 
   return (
@@ -87,7 +89,7 @@ const TaskForm = () => {
           onChange={handleInputChange}
           placeholder="Görev başlığını giriniz..."
           className={`w-full input-field ${error ? 'border-red-500 focus:ring-red-500' : ''}`}
-          disabled={creating || loading}
+          disabled={creating || formLoading}
         />
       </div>
 
@@ -104,7 +106,7 @@ const TaskForm = () => {
           onChange={handleInputChange}
 
           className="w-full input-field"
-          disabled={creating || loading}
+          disabled={creating || formLoading}
         />
       </div>
 
@@ -116,7 +118,7 @@ const TaskForm = () => {
       {/* submit */}
       <button
         type="submit"
-        disabled={creating || loading || !taskData.title.trim()}
+        disabled={creating || formLoading || !taskData.title.trim()}
         className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {creating ? (
@@ -124,7 +126,7 @@ const TaskForm = () => {
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
             Ekleniyor...
           </div>
-        ) : loading ? (
+        ) : formLoading ? (
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
             Yükleniyor...
@@ -135,6 +137,6 @@ const TaskForm = () => {
       </button>
     </form>
   );
-};
+});
 
 export default TaskForm; 

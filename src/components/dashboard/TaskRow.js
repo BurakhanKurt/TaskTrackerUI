@@ -1,43 +1,15 @@
-import React, { useState, useRef, useEffect, memo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { validateUpdateTaskTitle, validateUpdateTaskDueDate } from '../../utils/validators';
 
-
-const TaskRow = memo(({ 
-  task, 
-  onUpdateTitle, 
-  onToggleCompletion, 
-  onDelete, 
-  onUpdateDueDate,
-  isUpdating, 
-  isDeleting 
-}) => {
-  // callback'leri memoize et
-  const memoizedOnUpdateTitle = useCallback(onUpdateTitle, [onUpdateTitle]);
-  const memoizedOnToggleCompletion = useCallback(onToggleCompletion, [onToggleCompletion]);
-  const memoizedOnDelete = useCallback(onDelete, [onDelete]);
-  const memoizedOnUpdateDueDate = useCallback(onUpdateDueDate, [onUpdateDueDate]);
-
-  // input verileri
+// Title Field Component
+const TaskTitleField = ({ task, onUpdateTitle }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
-  const [isEditingDate, setIsEditingDate] = useState(false);
-  const [editDateValue, setEditDateValue] = useState(task.dueDate || '');
-  const [showContextMenu, setShowContextMenu] = useState(false);
-  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
-  const [showThreeDotMenu, setShowThreeDotMenu] = useState(false);
-  const [threeDotMenuPosition, setThreeDotMenuPosition] = useState({ x: 0, y: 0 });
   const [isSaving, setIsSaving] = useState(false);
-  const [isSavingDate, setIsSavingDate] = useState(false);
-
-  // focus
   const inputRef = useRef(null);
-  const dateInputRef = useRef(null);
-  const contextMenuRef = useRef(null);
-  const threeDotMenuRef = useRef(null);
-  const rowRef = useRef(null);
   const debounceTimeoutRef = useRef(null);
 
-  // isEditing true olduğunda düzenlemeye başla
+  // Focus when editing starts
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
@@ -45,28 +17,14 @@ const TaskRow = memo(({
     }
   }, [isEditing]);
 
-  // isEditingDate true olduğunda tarih düzenlemeye başla
-  useEffect(() => {
-    if (isEditingDate && dateInputRef.current) {
-      dateInputRef.current.focus();
-    }
-  }, [isEditingDate]);
-
-  // title değiştiğinde düzenleme değerini güncelle
+  // Update edit value when task title changes
   useEffect(() => {
     if (!isEditing) {
       setEditValue(task.title);
     }
   }, [task.title, isEditing]);
 
-  // dueDate değiştiğinde düzenleme değerini güncelle
-  useEffect(() => {
-    if (!isEditingDate) {
-      setEditDateValue(task.dueDate || '');
-    }
-  }, [task.dueDate, isEditingDate]);
-
-  // kaldırıldığında debounce timeout'unu temizle
+  // Cleanup debounce timeout
   useEffect(() => {
     return () => {
       if (debounceTimeoutRef.current) {
@@ -74,6 +32,279 @@ const TaskRow = memo(({
       }
     };
   }, []);
+
+  const handleStartEdit = () => {
+    setIsEditing(true);
+    setEditValue(task.title);
+  };
+
+  const debouncedSave = async (value) => {
+    const trimmedValue = value.trim();
+    
+    const errors = validateUpdateTaskTitle(task.id, trimmedValue);
+    
+    if (Object.keys(errors).length === 0 && trimmedValue !== task.title) {
+      setIsSaving(true);
+      try {
+        await onUpdateTitle(task.id, trimmedValue);
+      } catch (error) {
+        setEditValue(task.title);
+      } finally {
+        setIsSaving(false);
+      }
+    } else if (Object.keys(errors).length > 0) {
+      setEditValue(task.title);
+      setIsEditing(false);
+    } else if (!trimmedValue) {
+      setEditValue(task.title);
+      setIsEditing(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const newValue = e.target.value;
+    setEditValue(newValue);
+    
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
+    debounceTimeoutRef.current = setTimeout(() => {
+      debouncedSave(newValue);
+    }, 2000);
+  };
+
+  const handleSaveEdit = async () => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
+    const trimmedValue = editValue.trim();
+    const errors = validateUpdateTaskTitle(task.id, trimmedValue);
+    
+    if (Object.keys(errors).length === 0 && trimmedValue !== task.title) {
+      setIsSaving(true);
+      try {
+        await onUpdateTitle(task.id, trimmedValue);
+        setIsEditing(false);
+      } catch (error) {
+        setEditValue(task.title);
+        setIsEditing(false);
+      } finally {
+        setIsSaving(false);
+      }
+    } else if (Object.keys(errors).length > 0) {
+      setEditValue(task.title);
+      setIsEditing(false);
+    } else if (!trimmedValue) {
+      setEditValue(task.title);
+      setIsEditing(false);
+    } else {
+      setIsEditing(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditValue(task.title);
+    setIsEditing(false);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
+  };
+
+  return (
+    <td className="px-6 py-4 whitespace-nowrap">
+      {isEditing ? (
+        <div className="flex items-center space-x-2">
+          <div className="flex-1 relative">
+            <input
+              ref={inputRef}
+              type="text"
+              value={editValue}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyPress}
+              onBlur={handleSaveEdit}
+              className={`w-full input-field text-sm py-1 px-2 pr-8 ${isSaving ? 'border-blue-500' : ''}`}
+              disabled={isSaving}
+            />
+            {isSaving && (
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div 
+          className={`cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition-colors duration-200 ${
+            task.isCompleted ? 'line-through text-gray-500' : 'text-gray-900'
+          }`}
+          onClick={handleStartEdit}
+          title="Düzenlemek için tıklayın"
+        >
+          <div className="flex items-center space-x-2">
+            <span>{task.title}</span>
+            {isSaving && (
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+            )}
+          </div>
+        </div>
+      )}
+    </td>
+  );
+};
+
+// Date Field Component
+const TaskDateField = ({ task, onUpdateDueDate }) => {
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [editDateValue, setEditDateValue] = useState(task.dueDate || '');
+  const [isSavingDate, setIsSavingDate] = useState(false);
+  const dateInputRef = useRef(null);
+
+  useEffect(() => {
+    if (isEditingDate && dateInputRef.current) {
+      dateInputRef.current.focus();
+    }
+  }, [isEditingDate]);
+
+  useEffect(() => {
+    if (!isEditingDate) {
+      setEditDateValue(task.dueDate || '');
+    }
+  }, [task.dueDate, isEditingDate]);
+
+  const handleStartDateEdit = () => {
+    setIsEditingDate(true);
+    setEditDateValue(task.dueDate || '');
+  };
+
+  const handleSaveDateEdit = async () => {
+    if (editDateValue === (task.dueDate || '')) {
+      setIsEditingDate(false);
+      return;
+    }
+    
+    const errors = validateUpdateTaskDueDate(task.id, editDateValue || null);
+    
+    if (Object.keys(errors).length > 0) {
+      alert('Hata: ' + errors.dueDate);
+      setEditDateValue(task.dueDate || '');
+      setIsEditingDate(false);
+      return;
+    }
+    
+    setIsSavingDate(true);
+    try {
+      await onUpdateDueDate(task.id, editDateValue || null);
+      setIsEditingDate(false);
+    } catch (error) {
+      const errorMessage = error.payload || 'Tarih güncellenirken bir hata oluştu';
+      alert('Hata: ' + errorMessage);
+      setEditDateValue(task.dueDate || '');
+      setIsEditingDate(false);
+    } finally {
+      setIsSavingDate(false);
+    }
+  };
+
+  const handleCancelDateEdit = () => {
+    setEditDateValue(task.dueDate || '');
+    setIsEditingDate(false);
+  };
+
+  const isOverdue = (dateString) => {
+    if (!dateString) return false;
+    const dueDate = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return dueDate < today;
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('tr-TR');
+  };
+
+  return (
+    <td className="px-6 py-4 whitespace-nowrap">
+      {isEditingDate ? (
+        <div className="flex items-center space-x-2">
+          <div className="flex-1 relative">
+            <input
+              ref={dateInputRef}
+              type="date"
+              value={editDateValue}
+              onChange={(e) => {
+                const newDate = e.target.value;
+                setEditDateValue(newDate);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSaveDateEdit();
+                } else if (e.key === 'Escape') {
+                  handleCancelDateEdit();
+                }
+              }}
+              onBlur={handleSaveDateEdit}
+              className={`w-full text-sm border border-gray-300 rounded px-2 py-1 ${isSavingDate ? 'border-blue-500' : ''}`}
+              disabled={isSavingDate}
+            />
+            {isSavingDate && (
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div 
+          className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition-colors duration-200"
+          onClick={handleStartDateEdit}
+          title="Bitiş tarihini düzenlemek için tıklayın"
+        >
+          {task.dueDate ? (
+            <div className="flex items-center space-x-1">
+              <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+              </svg>
+              <span className={isOverdue(task.dueDate) ? 'text-red-600 font-medium' : ''}>
+                {formatDate(task.dueDate)}
+              </span>
+              {isOverdue(task.dueDate) && !task.isCompleted && (
+                <span className="text-xs text-red-500">(Gecikmiş)</span>
+              )}
+            </div>
+          ) : (
+            <span className="text-gray-400">Tarih ekle</span>
+          )}
+        </div>
+      )}
+    </td>
+  );
+};
+
+const TaskRow = ({ 
+  task, 
+  onUpdateTitle, 
+  onToggleCompletion, 
+  onDelete, 
+  onUpdateDueDate
+}) => {
+  // input verileri
+  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [showThreeDotMenu, setShowThreeDotMenu] = useState(false);
+  const [threeDotMenuPosition, setThreeDotMenuPosition] = useState({ x: 0, y: 0 });
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
+
+  // focus
+  const contextMenuRef = useRef(null);
+  const threeDotMenuRef = useRef(null);
+  const rowRef = useRef(null);
 
   // dışarı tıklandığında veya esc tuşuna basıldığında menüleri kapat
   useEffect(() => {
@@ -102,171 +333,22 @@ const TaskRow = memo(({
     };
   }, []);
 
-  // start edit
-  const handleStartEdit = () => {
-    setIsEditing(true);
-    setEditValue(task.title);
-  };
-
-  // start date edit
-  const handleStartDateEdit = () => {
-    setIsEditingDate(true);
-    setEditDateValue(task.dueDate || '');
-  };
-
-  // save date edit
-  const handleSaveDateEdit = async () => {
-    // Eğer tarih değişmediyse sadece edit modundan çık
-    if (editDateValue === (task.dueDate || '')) {
-      setIsEditingDate(false);
-      return;
-    }
-    
-    // validasyon
-    const errors = validateUpdateTaskDueDate(task.id, editDateValue || null);
-    
-    if (Object.keys(errors).length > 0) {
-      // hata göster
-      alert('Hata: ' + errors.dueDate);
-      setEditDateValue(task.dueDate || '');
-      setIsEditingDate(false);
-      return;
-    }
-    
-    setIsSavingDate(true);
-    try {
-      await memoizedOnUpdateDueDate(task.id, editDateValue || null);
-      setIsEditingDate(false);
-    } catch (error) {
-      console.error('Tarih güncellenirken hata:', error);
-      // API hatası mesajını göster
-      const errorMessage = error.payload || 'Tarih güncellenirken bir hata oluştu';
-      alert('Hata: ' + errorMessage);
-      setEditDateValue(task.dueDate || '');
-      setIsEditingDate(false);
-    } finally {
-      setIsSavingDate(false);
-    }
-  };
-
-  // cancel date edit
-  const handleCancelDateEdit = () => {
-    setEditDateValue(task.dueDate || '');
-    setIsEditingDate(false);
-  };
-
-  // debounced save
-  const debouncedSave = async (value) => {
-    const trimmedValue = value.trim();
-    
-    // validasyon
-    const errors = validateUpdateTaskTitle(task.id, trimmedValue);
-    
-    if (Object.keys(errors).length === 0 && trimmedValue !== task.title) {
-      setIsSaving(true);
-      try {
-        await memoizedOnUpdateTitle(task.id, trimmedValue);
-        // başarılıysa edit modundan çık
-        setIsEditing(false);
-      } catch (error) {
-        console.error('Başlık güncellenirken hata:', error);
-        // hata durumunda orijinal değere sıfırla
-        setEditValue(task.title);
-      } finally {
-        setIsSaving(false);
-      }
-    } else if (Object.keys(errors).length > 0) {
-      // hata göster
-      console.error('Doğrulama hatası:', errors.title);
-      setEditValue(task.title);
-      setIsEditing(false);
-    } else if (!trimmedValue) {
-      // boşsa orijinal değere sıfırla
-      setEditValue(task.title);
-      setIsEditing(false);
-    }
-  };
-
-  // debounce ile girdi değişikliğini işle
-  const handleInputChange = (e) => {
-    const newValue = e.target.value;
-    setEditValue(newValue);
-    
-    // mevcut timeoutu temizle
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-    
-    // debounced kaydetme için yeni timeout ayarla
-    debounceTimeoutRef.current = setTimeout(() => {
-      debouncedSave(newValue);
-    }, 1000);
-  };
-
-  // save edit
-  const handleSaveEdit = async () => {
-    // bekleyen debounce'u temizle
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-    
-    const trimmedValue = editValue.trim();
-    
-    // validasyon
-    const errors = validateUpdateTaskTitle(task.id, trimmedValue);
-    
-    if (Object.keys(errors).length === 0 && trimmedValue !== task.title) {
-      setIsSaving(true);
-      try {
-        await memoizedOnUpdateTitle(task.id, trimmedValue);
-        // başarılıysa edit modundan çık
-        setIsEditing(false);
-      } catch (error) {
-        console.error('Başlık güncellenirken hata:', error);
-        setEditValue(task.title);
-        setIsEditing(false);
-      } finally {
-        setIsSaving(false);
-      }
-    } else if (Object.keys(errors).length > 0) {
-      // hata göster
-      console.error('Doğrulama hatası:', errors.title);
-      setEditValue(task.title);
-      setIsEditing(false);
-    } else if (!trimmedValue) {
-      // boşsa orijinal değere sıfırla
-      setEditValue(task.title);
-      setIsEditing(false);
-    } else {
-      // değişiklik yoksa sadece edit modundan çık
-      setIsEditing(false);
-    }
-  };
-
-  // cancel edit
-  const handleCancelEdit = () => {
-    setEditValue(task.title);
-    setIsEditing(false);
-  };
-
-  // key press
-  const handleKeyPress = (e) => {
-    if (e.key === 'Escape') {
-      handleCancelEdit();
-    }
-  };
-
   // toggle completion
   const handleToggleCompletion = async () => {
-    await memoizedOnToggleCompletion(task.id, !task.isCompleted);
+    setIsToggling(true);
+    try {
+      await onToggleCompletion(task.id, !task.isCompleted);
+    } finally {
+      setIsToggling(false);
+    }
   };
 
   // context menu
   const handleContextMenu = (e) => {
-    e.preventDefault(); // Varsayılan tarayıcı bağlam menüsünü engelle
+    e.preventDefault();
     setContextMenuPosition({ x: e.clientX, y: e.clientY });
     setShowContextMenu(true);
-    setShowThreeDotMenu(false); // Üç nokta menüsü açıksa kapat
+    setShowThreeDotMenu(false);
   };
 
   // three dot menu
@@ -274,28 +356,18 @@ const TaskRow = memo(({
     e.preventDefault();
     setThreeDotMenuPosition({ x: e.clientX, y: e.clientY });
     setShowThreeDotMenu(true);
-    setShowContextMenu(false); // Bağlam menüsü açıksa kapat
+    setShowContextMenu(false);
   };
 
   // delete
   const handleDelete = async () => {
     setShowContextMenu(false);
-    await memoizedOnDelete(task.id);
-  };
-
-  // overdue
-  const isOverdue = (dateString) => {
-    if (!dateString) return false;
-    const dueDate = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return dueDate < today;
-  };
-
-  // format date
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('tr-TR');
+    setIsDeleting(true);
+    try {
+      await onDelete(task.id);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -321,103 +393,13 @@ const TaskRow = memo(({
         </td>
 
         {/* Başlık Sütunu */}
-        <td className="px-6 py-4">
-          {isEditing ? (
-            <div className="flex items-center space-x-2">
-              <div className="flex-1 relative">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={editValue}
-                  onChange={handleInputChange}
-                  onKeyDown={handleKeyPress}
-                  onBlur={handleSaveEdit}
-                  className={`w-full input-field text-sm py-1 px-2 pr-8 ${isSaving ? 'border-blue-500' : ''}`}
-                  disabled={isUpdating || isSaving}
-                />
-                {isSaving && (
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div 
-              className={`cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition-colors duration-200 ${
-                task.isCompleted ? 'line-through text-gray-500' : 'text-gray-900'
-              }`}
-              onClick={handleStartEdit}
-              title="Düzenlemek için tıklayın"
-            >
-              <div className="flex items-center space-x-2">
-                <span>{task.title}</span>
-                {isSaving && (
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
-                )}
-              </div>
-            </div>
-          )}
-        </td>
+        <TaskTitleField task={task} onUpdateTitle={onUpdateTitle} />
 
         {/* Bitiş Tarihi Sütunu */}
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-          {isEditingDate ? (
-            <div className="flex items-center space-x-2">
-              <div className="flex-1 relative">
-                <input
-                  ref={dateInputRef}
-                  type="date"
-                  value={editDateValue}
-                  onChange={(e) => {
-                    const newDate = e.target.value;
-                    setEditDateValue(newDate);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSaveDateEdit();
-                    } else if (e.key === 'Escape') {
-                      handleCancelDateEdit();
-                    }
-                  }}
-                  onBlur={handleSaveDateEdit}
-                  className={`w-full text-sm border border-gray-300 rounded px-2 py-1 ${isSavingDate ? 'border-blue-500' : ''}`}
-                  disabled={isUpdating || isSavingDate}
-                />
-                {isSavingDate && (
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div 
-              className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition-colors duration-200"
-              onClick={handleStartDateEdit}
-              title="Bitiş tarihini düzenlemek için tıklayın"
-            >
-              {task.dueDate ? (
-                <div className="flex items-center space-x-1">
-                  <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                  </svg>
-                  <span className={isOverdue(task.dueDate) ? 'text-red-600 font-medium' : ''}>
-                    {formatDate(task.dueDate)}
-                  </span>
-                  {isOverdue(task.dueDate) && !task.isCompleted && (
-                    <span className="text-xs text-red-500">(Gecikmiş)</span>
-                  )}
-                </div>
-              ) : (
-                <span className="text-gray-400">Tarih ekle</span>
-              )}
-            </div>
-          )}
-        </td>
+        <TaskDateField task={task} onUpdateDueDate={onUpdateDueDate} />
 
         {/* İşlemler Sütunu */}
-        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+        <td className="px-6 py-4 whitespace-nowrap">
           <div className="flex items-center space-x-2">
 
             {/* 3-Nokta Menü Butonu */}
@@ -488,7 +470,7 @@ const TaskRow = memo(({
               setShowThreeDotMenu(false);
               handleToggleCompletion();
             }}
-            disabled={isUpdating}
+            disabled={isToggling}
             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50 flex items-center"
           >
             {task.isCompleted ? (
@@ -500,13 +482,12 @@ const TaskRow = memo(({
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             )}
-            {isUpdating ? 'Güncelleniyor...' : (task.isCompleted ? 'Bekliyor olarak işaretle' : 'Tamamlandı olarak işaretle')}
+            {isToggling ? 'Güncelleniyor...' : (task.isCompleted ? 'Bekliyor olarak işaretle' : 'Tamamlandı olarak işaretle')}
           </button>
         </div>
       )}
-
     </>
   );
-});
+};
 
 export default TaskRow; 
