@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState, useRef, memo } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   fetchTasks, 
@@ -17,8 +17,8 @@ import TaskForm from './TaskForm';
 import TaskList from './TaskList';
 import TaskStats from './TaskStats';
 
-// Filtreler bileşeni - memo ile optimize edilmiş
-const TaskFilters = memo(({ 
+// Filtreler bileşeni
+const TaskFilters = ({ 
   statusFilter, 
   searchInput, 
   endDateInput, 
@@ -85,10 +85,10 @@ const TaskFilters = memo(({
       </div>
     </div>
   );
-});
+};
 
-// Pagination bileşeni - memo ile optimize edilmiş
-const TaskPagination = memo(({ page, totalPages, onPageChange }) => {
+// Pagination bileşeni
+const TaskPagination = ({ page, totalPages, onPageChange }) => {
   if (totalPages <= 1) return null;
   
   return (
@@ -116,9 +116,9 @@ const TaskPagination = memo(({ page, totalPages, onPageChange }) => {
       </nav>
     </div>
   );
-});
+};
 
-const Dashboard = memo(() => {
+const Dashboard = () => {
   // input verileri
   const [searchInput, setSearchInput] = useState('');
   const [endDateInput, setEndDateInput] = useState('');
@@ -312,6 +312,6 @@ const Dashboard = memo(() => {
       </div>
     </div>
   );
-});
+};
 
 export default Dashboard; 

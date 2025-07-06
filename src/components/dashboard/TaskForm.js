@@ -1,10 +1,9 @@
-import React, { useState, memo } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createTask } from '../../store/slices/taskSlice';
 import { validateCreateTask } from '../../utils/validators';
 
-
-const TaskForm = memo(({ onSubmit, loading: formLoading, error: formError }) => {
+const TaskForm = ({ onSubmit, loading: formLoading, error: formError }) => {
   // input verileri
   const [taskData, setTaskData] = useState({
     title: '',
@@ -137,6 +136,6 @@ const TaskForm = memo(({ onSubmit, loading: formLoading, error: formError }) => 
       </button>
     </form>
   );
-});
+};
 
 export default TaskForm; 
