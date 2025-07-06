@@ -123,7 +123,7 @@ export const tasksAPI = {
     }
     
     if (endDate) {
-      url += `&endDate=${endDate}`;
+      url += `&dueDate=${endDate}`;
     }
     
     return api.get(url);
