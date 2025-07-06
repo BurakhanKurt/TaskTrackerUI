@@ -27,7 +27,6 @@ export const loginUser = createAsyncThunk(
       // model
       const user = {
         id: response.data.data.id, 
-        email: response.data.data.email,
         username: response.data.data.username,
         name: response.data.data.username,
       };

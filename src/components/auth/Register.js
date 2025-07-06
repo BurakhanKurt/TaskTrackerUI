@@ -9,16 +9,16 @@ const Register = () => {
   // input verileri
   const [formData, setFormData] = useState({
     username: '',
-    email: '',
     password: '',
     confirmPassword: '',
-    firstName: '',
-    lastName: '',
-    phoneNumber: '',
   });
 
   // validasyon
   const [errors, setErrors] = useState({});
+  
+  // Şifre görüntüleme
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   // kayıt başarılı olduktan sonra yönlendirme durumu
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -61,15 +61,19 @@ const Register = () => {
     }
   };
 
+  // şifre görüntüleme
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
 
   const validateForm = () => {
     const userData = {
       username: formData.username,
-      email: formData.email,
       password: formData.password,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      phoneNumber: formData.phoneNumber,
     };
 
     // validasyon
@@ -94,14 +98,10 @@ const Register = () => {
       return;
     }
 
-    // Kayıt için kullanıcı verilerini hazırla (confirmPassword hariç)
+    // Kayıt için kullanıcı verilerini hazırla
     const userData = {
       username: formData.username.trim(),
-      email: formData.email.trim(),
       password: formData.password,
-      firstName: formData.firstName.trim(),
-      lastName: formData.lastName.trim(),
-      phoneNumber: formData.phoneNumber.trim(),
     };
 
     // Kayıt eylemini gönder
@@ -112,10 +112,10 @@ const Register = () => {
       // Yönlendirme durumunu aktif et
       setIsRedirecting(true);
       
-      // 3 saniye bekle ve login'e yönlendir
+      // 1.5 saniye bekle ve login'e yönlendir
       setTimeout(() => {
         navigate('/login');
-      }, 3000);
+      }, 1000);
     }
   };
 
@@ -188,106 +188,40 @@ const Register = () => {
               )}
             </div>
 
-            {/* First Name Field */}
-            <div className="mb-4">
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
-                Ad
-              </label>
-              <input
-                id="firstName"
-                name="firstName"
-                type="text"
-                autoComplete="given-name"
-                required
-                className={`input-field ${errors.firstName ? 'border-red-500 focus:ring-red-500' : ''}`}
-                placeholder="Adınızı giriniz"
-                value={formData.firstName}
-                onChange={handleInputChange}
-              />
-              {errors.firstName && (
-                <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
-              )}
-            </div>
-
-            {/* Last Name Field */}
-            <div className="mb-4">
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
-                Soyad
-              </label>
-              <input
-                id="lastName"
-                name="lastName"
-                type="text"
-                autoComplete="family-name"
-                required
-                className={`input-field ${errors.lastName ? 'border-red-500 focus:ring-red-500' : ''}`}
-                placeholder="Soyadınızı giriniz"
-                value={formData.lastName}
-                onChange={handleInputChange}
-              />
-              {errors.lastName && (
-                <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
-              )}
-            </div>
-
-            {/* Email Field */}
-            <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                E-posta Adresi
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className={`input-field ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
-                placeholder="E-posta adresinizi giriniz"
-                value={formData.email}
-                onChange={handleInputChange}
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Phone Number Field */}
-            <div className="mb-4">
-              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                Telefon Numarası
-              </label>
-              <input
-                id="phoneNumber"
-                name="phoneNumber"
-                type="tel"
-                autoComplete="tel"
-                required
-                className={`input-field ${errors.phoneNumber ? 'border-red-500 focus:ring-red-500' : ''}`}
-                placeholder="+905551234567"
-                value={formData.phoneNumber}
-                onChange={handleInputChange}
-              />
-              {errors.phoneNumber && (
-                <p className="mt-1 text-sm text-red-600">{errors.phoneNumber}</p>
-              )}
-            </div>
-
             {/* Password Field */}
             <div className="mb-4">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Şifre
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className={`input-field ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
-                placeholder="Şifre oluşturun"
-                value={formData.password}
-                onChange={handleInputChange}
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  className={`input-field pr-10 ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  placeholder="Şifre oluşturun"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password}</p>
               )}
@@ -298,17 +232,35 @@ const Register = () => {
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                 Şifre Onayı
               </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                className={`input-field ${errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : ''}`}
-                placeholder="Şifrenizi onaylayın"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-              />
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  className={`input-field pr-10 ${errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  placeholder="Şifrenizi onaylayın"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                />
+                <button
+                  type="button"
+                  onClick={toggleConfirmPasswordVisibility}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
               {errors.confirmPassword && (
                 <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
               )}

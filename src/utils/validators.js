@@ -2,7 +2,7 @@
 const PATTERNS = {
   EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   USERNAME: /^[a-zA-Z][a-zA-Z0-9_]*$/,
-  PASSWORD: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+  PASSWORD: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._-])[A-Za-z\d@$!%*?&._-]+$/,
   TURKISH_NAME: /^[a-zA-ZğüşıöçĞÜŞİÖÇ\s]+$/,
   TASK_TITLE: /^[a-zA-ZğüşıöçĞÜŞİÖÇ0-9\s\-_.,!?()]+$/,
   PHONE_NUMBER: /^[+]?[0-9\s\-\(\)]+$/
@@ -57,15 +57,6 @@ export const validateRegisterUser = (userData) => {
     errors.username = 'Kullanıcı adı sadece harf, rakam ve alt çizgi içerebilir ve harf ile başlamalıdır';
   }
 
-  // email
-  if (!userData.email?.trim()) {
-    errors.email = 'E-posta zorunludur';
-  } else if (userData.email.trim().length > 100) {
-    errors.email = 'E-posta en fazla 100 karakter olabilir';
-  } else if (!PATTERNS.EMAIL.test(userData.email.trim())) {
-    errors.email = 'Geçerli bir e-posta adresi giriniz';
-  }
-
   // password
   if (!userData.password?.trim()) {
     errors.password = 'Şifre zorunludur';
@@ -77,36 +68,6 @@ export const validateRegisterUser = (userData) => {
     errors.password = 'Şifre en az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir';
   }
 
-  // first name
-  if (userData.firstName?.trim()) {
-    if (userData.firstName.trim().length > 50) {
-      errors.firstName = 'Ad en fazla 50 karakter olabilir';
-    } else if (!PATTERNS.TURKISH_NAME.test(userData.firstName.trim())) {
-      errors.firstName = 'Ad sadece harf ve boşluk içerebilir';
-    }
-  }
-
-  // last name
-  if (userData.lastName?.trim()) {
-    if (userData.lastName.trim().length > 50) {
-      errors.lastName = 'Soyad en fazla 50 karakter olabilir';
-    } else if (!PATTERNS.TURKISH_NAME.test(userData.lastName.trim())) {
-      errors.lastName = 'Soyad sadece harf ve boşluk içerebilir';
-    }
-  }
-
-  // phone number
-  if (userData.phoneNumber?.trim()) {
-    const cleanPhone = userData.phoneNumber.replace(/\s/g, '');
-    if (cleanPhone.length < 10) {
-      errors.phoneNumber = 'Telefon numarası en az 10 karakter olmalıdır';
-    } else if (userData.phoneNumber.length > 20) {
-      errors.phoneNumber = 'Telefon numarası en fazla 20 karakter olabilir';
-    } else if (!PATTERNS.PHONE_NUMBER.test(userData.phoneNumber)) {
-      errors.phoneNumber = 'Geçerli bir telefon numarası formatı giriniz';
-    }
-  }
-
   return errors;
 };
 
@@ -114,13 +75,11 @@ export const validateRegisterUser = (userData) => {
 export const validateLoginUser = (userData) => {
   const errors = {};
 
-  // email
-  if (!userData.email?.trim()) {
-    errors.email = 'E-posta zorunludur';
-  } else if (userData.email.trim().length > 100) {
-    errors.email = 'E-posta en fazla 100 karakter olabilir';
-  } else if (!PATTERNS.EMAIL.test(userData.email.trim())) {
-    errors.email = 'Geçerli bir e-posta adresi giriniz';
+  // username
+  if (!userData.username?.trim()) {
+    errors.username = 'Kullanıcı adı zorunludur';
+  } else if (userData.username.trim().length > 50) {
+    errors.username = 'Kullanıcı adı en fazla 50 karakter olabilir';
   }
 
   // password
@@ -128,6 +87,8 @@ export const validateLoginUser = (userData) => {
     errors.password = 'Şifre zorunludur';
   } else if (userData.password.length > 100) {
     errors.password = 'Şifre en fazla 100 karakter olabilir';
+  } else if (!PATTERNS.PASSWORD.test(userData.password)) {
+    errors.password = 'Şifre en az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir';
   }
 
   return errors;

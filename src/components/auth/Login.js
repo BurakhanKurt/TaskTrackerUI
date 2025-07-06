@@ -8,7 +8,7 @@ import { validateLoginUser } from '../../utils/validators';
 const Login = () => {
   // input verileri
   const [formData, setFormData] = useState({
-    email: 'admin@tasktracker.com',//geçici
+    username: 'admin',//geçici
     password: 'Admin123!',//geçici
   });
 
@@ -107,24 +107,24 @@ const Login = () => {
         {/* Login Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="form-container">
-            {/* Email Field */}
+            {/* Username Field */}
             <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                E-posta Adresi
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                Kullanıcı Adı
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
                 required
-                className={`input-field ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
-                placeholder="E-posta adresinizi giriniz"
-                value={formData.email}
+                className={`input-field ${errors.username ? 'border-red-500 focus:ring-red-500' : ''}`}
+                placeholder="Kullanıcı adınızı giriniz"
+                value={formData.username}
                 onChange={handleInputChange}
               />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              {errors.username && (
+                <p className="mt-1 text-sm text-red-600">{errors.username}</p>
               )}
             </div>
 
